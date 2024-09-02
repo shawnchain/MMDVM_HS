@@ -234,12 +234,12 @@ void CSerialPort::getVersion()
 
   reply[1U] = count;
 
-  writeInt(1U, reply, count);
+  writeInt(1U, reply, count, true);
 }
 
 uint8_t CSerialPort::setConfig(const uint8_t* data, uint8_t length)
 {
-  if (length < 23U)
+  if (length < 21U)
     return 4U;
 
   bool ysfLoDev  = (data[0U] & 0x08U) == 0x08U;
@@ -294,7 +294,7 @@ uint8_t CSerialPort::setConfig(const uint8_t* data, uint8_t length)
   uint8_t p25TXLevel    = data[12U];
   uint8_t nxdnTXLevel   = data[15U];
   uint8_t pocsagTXLevel = data[17U];
-  uint8_t m17TXLevel    = data[21U];
+  uint8_t m17TXLevel    = data[18U];  // fixme - should be data[21]
 
   io.setDeviations(dstarTXLevel, dmrTXLevel, ysfTXLevel, p25TXLevel, nxdnTXLevel, m17TXLevel, pocsagTXLevel, ysfLoDev);
 
@@ -330,8 +330,9 @@ uint8_t CSerialPort::setConfig(const uint8_t* data, uint8_t length)
 
 #if !defined(DUPLEX)
   if (m_duplex && m_calState == STATE_IDLE && modemState != STATE_DSTARCAL) {
-    DEBUG1("Full duplex not supported with this firmware");
-    return 6U;
+    DEBUG1("Full duplex not supported with this firmware, ignored.");
+    m_duplex = false;
+    // return 6U;
   }
 #elif defined(DUPLEX) && (defined(ZUMSPOT_ADF7021) || defined(LONESTAR_USB) || defined(SKYBRIDGE_HS))
   if (io.isDualBand() && m_duplex && m_calState == STATE_IDLE && modemState != STATE_DSTARCAL) {
